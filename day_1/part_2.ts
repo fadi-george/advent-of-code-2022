@@ -10,7 +10,7 @@ Find the top three Elves carrying the most Calories. How many Calories are those
 */
 import { readInput } from "../helpers";
 
-const input = readInput({ useSample: false }).concat([""]);
+const input = readInput().concat([""]);
 const totals: number[] = [];
 
 let elfIndex = 0;

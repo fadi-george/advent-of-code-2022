@@ -39,7 +39,7 @@ Find the Elf carrying the most Calories. How many total Calories is that Elf car
 */
 import { readInput } from "../helpers";
 
-const input = readInput({ useSample: false }).concat([""]);
+const input = readInput().concat([""]);
 const totals: number[] = [];
 
 let elfIndex = 0;
