@@ -30,6 +30,7 @@ In the above example, the priority of the item type that appears in both compart
 
 Find the item type that appears in both compartments of each rucksack. What is the sum of the priorities of those item types?
 */
+console.time("Part 1");
 import { readInput } from "../helpers";
 
 const input = readInput();
@@ -48,5 +49,5 @@ const total = input.reduce((total, line) => {
 
   return total + priorities.reduce((a, b) => a + b, 0);
 }, 0);
-
-console.log("Total: ", total);
+console.timeEnd("Part 1");
+// console.log("Total: ", total);

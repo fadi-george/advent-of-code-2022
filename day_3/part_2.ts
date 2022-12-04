@@ -24,6 +24,7 @@ Priorities for these items must still be found to organize the sticker attachmen
 
 Find the item type that corresponds to the badges of each three-Elf group. What is the sum of the priorities of those item types?
 */
+console.time("Part 2");
 import { readInput } from "../helpers";
 
 const input = readInput();
@@ -50,5 +51,4 @@ const total = input.reduce((acc, _, index) => {
   }
   return acc;
 }, 0);
-
-console.log(total);
+console.timeEnd("Part 2");
