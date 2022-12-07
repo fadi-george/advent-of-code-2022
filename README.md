@@ -1,4 +1,4 @@
-# Advent_of_Code_2022
+# Advent of Code 2022 (Typescript)
 
 My attempt at this year's advent of code.
 
