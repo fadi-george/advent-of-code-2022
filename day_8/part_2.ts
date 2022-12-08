@@ -21,17 +21,15 @@ for (let i = 1; i < input.length - 1; i++) {
 
     const counts = slices.map((slice) => {
       let count = 0;
-      for (let num of slice) {
+      slice.some((num) => {
         count++;
-        if (num >= curr) break;
-      }
+        return num >= curr;
+      });
       return count;
     });
 
     const sc = counts.reduce((acc, count) => acc * count, 1);
-    if (sc > maxScenicCount) {
-      maxScenicCount = sc;
-    }
+    if (sc > maxScenicCount) maxScenicCount = sc;
   }
 }
 
