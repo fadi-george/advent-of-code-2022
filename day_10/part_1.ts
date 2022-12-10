@@ -29,3 +29,39 @@ const total = [20, 60, 100, 140, 180, 220].reduce(
 );
 
 console.log(total);
+
+// Alternative solution:
+// import { readInput } from "../helpers";
+
+// const input = readInput(true).map((line) => line.split(" "));
+
+// let x = 1;
+// let cycle = 1;
+// let signalStrength: number[] = [];
+
+// const runCycle = () => {
+//   if ((cycle + 20) % 40 === 0) {
+//     signalStrength.push(x * cycle);
+//   }
+//   cycle++;
+// };
+
+// input.forEach((line) => {
+//   let op = line[0];
+
+//   switch (op) {
+//     case "noop": {
+//       runCycle();
+//       break;
+//     }
+//     case "addx": {
+//       let amt = Number(line[1]);
+//       runCycle();
+//       runCycle();
+//       x += amt;
+//       break;
+//     }
+//   }
+// });
+
+// console.log(signalStrength.reduce((acc, curr) => acc + curr, 0));

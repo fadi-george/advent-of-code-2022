@@ -2,25 +2,33 @@ import { readInput } from "../helpers";
 
 const input = readInput().map((line) => line.split(" "));
 
-let positions = [...Array(40)].map(() => ".");
-let spritePositions = positions.slice(0);
-spritePositions[0] = "#";
-spritePositions[1] = "#";
-spritePositions[2] = "#";
-
+let spritePositions = "###.....................................";
 let crtRow = "";
 let imgIndex = 0;
 
+const width = 40;
 const drawImage = () => {
   if (spritePositions[imgIndex] === "#") crtRow += "#";
   else crtRow += ".";
   imgIndex++;
 
-  if (imgIndex >= spritePositions.length) {
+  if (imgIndex >= width) {
     console.log(crtRow);
     crtRow = "";
     imgIndex = 0;
   }
+};
+
+const getSpritePositions = () => {
+  let positions = "";
+  if (x >= -1 && x <= width) {
+    positions += "#";
+    if (x > 0) positions += "#";
+    if (x < width - 1) positions += "#";
+  }
+  positions = positions.padStart(x + 2, ".");
+  positions = positions.padEnd(width, ".");
+  return positions;
 };
 
 let x = 1;
@@ -37,13 +45,10 @@ input.forEach((line) => {
       drawImage();
       drawImage();
 
-      spritePositions = positions.slice();
+      spritePositions = "";
+
       x += amt;
-      if (x > 0) {
-        spritePositions[x] = "#";
-        if (x < positions.length - 1) spritePositions[x + 1] = "#";
-        if (x > 0) spritePositions[x - 1] = "#";
-      }
+      spritePositions = getSpritePositions();
       break;
     }
   }
