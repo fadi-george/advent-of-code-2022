@@ -7,15 +7,13 @@ const p2Inspected: number[] = [];
 
 const input = readInput(true);
 const monkeys: {
-  [key: number]: {
-    ifFalse: number;
-    ifTrue: number;
-    op: (x: number) => number;
-    test: number;
-  };
-} = {};
+  ifFalse: number;
+  ifTrue: number;
+  op: (x: number) => number;
+  test: number;
+}[] = [];
 
-let monkeyId: keyof typeof monkeys;
+let monkeyId: number;
 input.forEach((line) => {
   const monkeyMatch = line.match(/Monkey (\d+):/);
   const op = line.match(/Operation: new = (.*)/);
@@ -36,8 +34,8 @@ input.forEach((line) => {
   } else if (/Starting items:/.test(line)) {
     const startingItems = line.match(/(\d+)/g)?.map(Number);
     if (startingItems) {
-      p1Items.push(startingItems.slice(0));
-      p2Items.push(startingItems.slice(0));
+      p1Items.push(startingItems.slice());
+      p2Items.push(startingItems.slice());
     }
   } else if (op) {
     const [op1, operand, op2] = op[1].split(" ");
@@ -60,32 +58,26 @@ input.forEach((line) => {
 });
 
 const getMonkeyBusiness = (counts: number[]) => {
-  let topTwoInspectCounts = counts.sort((a, b) => b - a).slice(0, 2);
-  let monkeyBusiness = topTwoInspectCounts.reduce((acc, curr) => acc * curr, 1);
-  return monkeyBusiness;
+  const topTwoInspectCounts = counts.sort((a, b) => b - a).slice(0, 2);
+  return topTwoInspectCounts.reduce((acc, curr) => acc * curr, 1);
 };
 
 // part 1
 let round = 1;
-while (round <= 20) {
-  p1Items.forEach((items, monkeyId) => {
-    const monkey = monkeys[monkeyId];
+while (round++ <= 20) {
+  p1Items.forEach((items, id) => {
+    const monkey = monkeys[id];
 
     const length = items.length;
-    for (let i = 0; i < length; i++) {
-      p1Inspected[monkeyId]++;
+    for (let i = 0; i < length; i++, p1Inspected[id]++) {
       const [item] = items.splice(0, 1);
+      const worryLevel = Math.floor(monkey.op(item) / 3);
 
-      let worryLevel = monkey.op(item);
-      worryLevel = Math.floor(worryLevel / 3);
-
-      const nextMonkeyId =
+      const nextMonkey =
         worryLevel % monkey.test === 0 ? monkey.ifTrue : monkey.ifFalse;
-      p1Items[nextMonkeyId].push(worryLevel);
+      p1Items[nextMonkey].push(worryLevel);
     }
   });
-
-  round++;
 }
 console.log(getMonkeyBusiness(p1Inspected));
 
@@ -93,24 +85,19 @@ console.log(getMonkeyBusiness(p1Inspected));
 const lcm = Object.values(monkeys).reduce((acc, m) => acc * m.test, 1);
 
 round = 1;
-while (round <= 10000) {
-  p2Items.forEach((items, monkeyId) => {
-    const monkey = monkeys[monkeyId];
+while (round++ <= 10000) {
+  p2Items.forEach((items, id) => {
+    const monkey = monkeys[id];
 
     const length = items.length;
-    for (let i = 0; i < length; i++) {
-      p2Inspected[monkeyId]++;
+    for (let i = 0; i < length; i++, p2Inspected[id]++) {
       const [item] = items.splice(0, 1);
+      const worryLevel = monkey.op(item) % lcm;
 
-      let worryLevel = monkey.op(item);
-      worryLevel = worryLevel % lcm;
-
-      const nextMonkeyId =
+      const nextMonkey =
         worryLevel % monkey.test === 0 ? monkey.ifTrue : monkey.ifFalse;
-      p2Items[nextMonkeyId].push(worryLevel);
+      p2Items[nextMonkey].push(worryLevel);
     }
   });
-
-  round++;
 }
 console.log(getMonkeyBusiness(p2Inspected));
