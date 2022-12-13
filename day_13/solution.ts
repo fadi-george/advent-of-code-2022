@@ -1,41 +1,39 @@
-import { readInput } from "../helpers";
+import { isNumber, readInput } from "../helpers";
 
 const input = readInput(true, "\n\n");
 
-type Value = number | Value[];
+type Value = (number | Value)[];
 const rightIndices: number[] = [];
 
-const compare = (left: Value[], right: Value[]): number => {
-  for (let i = 0; i < left.length; i++) {
-    let leftEl = left[i];
-    let rightEl = right[i];
+const compare = (a: Value, b: Value): number => {
+  for (let i = 0; i < a.length; i++) {
+    let left = a[i];
+    let right = b[i];
 
-    if (rightEl === undefined) return -1;
+    if (right === undefined) return -1;
 
-    if (typeof leftEl === "number") {
-      if (typeof rightEl === "number") {
-        if (left[i] < right[i]) return 1;
-        if (left[i] > right[i]) return -1;
+    if (isNumber(left)) {
+      if (isNumber(right)) {
+        if (left < right) return 1;
+        if (left > right) return -1;
         continue;
       } else {
-        leftEl = [leftEl];
+        left = [left];
       }
-    } else if (typeof rightEl === "number") {
-      rightEl = [rightEl];
+    } else if (isNumber(right)) {
+      right = [right];
     }
 
-    const valid = compare(leftEl, rightEl);
+    const valid = compare(left, right);
     if (valid !== 0) return valid;
   }
 
-  if (left.length > right.length) return -1;
-  if (left.length < right.length) return 1;
+  if (a.length > b.length) return -1;
+  if (a.length < b.length) return 1;
   return 0;
 };
 
-input.push(`[[2]]\n[[6]]`);
-
-const packets: Value[] = [];
+const packets: Value[] = [[[2]], [[6]]];
 input.forEach((pairs, index) => {
   let [left, right] = pairs.split("\n").map((pair) => JSON.parse(pair));
 
@@ -49,7 +47,7 @@ input.forEach((pairs, index) => {
 });
 
 // part 1
-const sum = rightIndices.slice(0, -1).reduce((acc, curr) => acc + curr, 0);
+const sum = rightIndices.reduce((acc, curr) => acc + curr, 0);
 console.log("Sum of ordered indices: ", sum);
 
 // part 2
