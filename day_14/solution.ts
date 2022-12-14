@@ -8,7 +8,7 @@ let maxY = -Infinity;
 let minX = Infinity;
 let maxX = -Infinity;
 
-const printGrid = ({ startCol = minX, endCol = maxX } = {}) => {
+const printGrid = ({ startCol = minX, endCol = maxX, endRow = maxY } = {}) => {
   let res = "";
 
   for (let r = 0; r < grid.length; r++) {
@@ -24,7 +24,7 @@ const printGrid = ({ startCol = minX, endCol = maxX } = {}) => {
   console.log(res);
 };
 
-input.forEach((path, index) => {
+input.forEach((path) => {
   const coords = path
     .split(" -> ")
     .map((coord) => coord.split(",").map(Number));
@@ -88,7 +88,6 @@ for (let r = 0; r <= groundRow; r++) {
   grid[r] = row;
 }
 
-// part 1
 const start = [500, 0];
 let steps = 0;
 
@@ -96,6 +95,9 @@ let part1Done = false;
 let part2Done = false;
 let part1Steps = 0;
 let part2Steps = 0;
+
+let part2MinX = Infinity;
+let part2MaxX = -Infinity;
 
 while (1) {
   let row = start[1];
@@ -114,7 +116,16 @@ while (1) {
     let right = grid[row][col + 1];
     let bottom = grid[row][col];
 
+    if (col < part2MinX) part2MinX = col;
+    if (col > part2MaxX) part2MaxX = col;
+
     if (row === 1 && col === 500 && left && right && bottom) {
+      grid[start[1]][start[0]] = "o";
+      printGrid({
+        startCol: part2MinX - 1,
+        endCol: part2MaxX + 1,
+        endRow: groundRow,
+      });
       part2Done = true;
       steps++;
       break;
@@ -133,16 +144,7 @@ while (1) {
       }
     }
 
-    if (bottom === "#") {
-      if (!left) {
-        col--;
-      } else if (!right) {
-        col++;
-      } else {
-        grid[row - 1][col] = "o";
-        break;
-      }
-    } else if (bottom === "o") {
+    if (bottom) {
       if (!left) {
         col--;
       } else if (!right) {
