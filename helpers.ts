@@ -20,3 +20,9 @@ export const split2Pairs = (arr: any[]) =>
     if (index % 2 === 0) acc.push(array.slice(index, index + 2));
     return acc;
   }, []);
+
+export const logIf = (condition: boolean, ...args: any[]) => {
+  if (condition) {
+    console.log(...args);
+  }
+};

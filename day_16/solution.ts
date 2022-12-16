@@ -1,4 +1,4 @@
-import { readInput } from "../helpers";
+import { logIf, readInput } from "../helpers";
 import { findPathWithCost } from "../dijkstra";
 
 const useSample = false;
@@ -108,17 +108,35 @@ let p2Queue = [
     pressure: 0,
     unvisited: new Set(valvesWithFlow),
     opened: new Set(),
+    // paths: [["AA"], ["AA"]],
+    // minsPath: [[26], [26]],
   },
 ];
 maxPressure = 0;
 
 while (p2Queue.length) {
-  p2Queue = p2Queue.sort((a, b) => b.pressure - a.pressure);
+  p2Queue = p2Queue.sort((a, b) => b.pressure - a.pressure).slice(0, 40000);
   const item = p2Queue.shift();
 
   if (item) {
+    // const cond =
+    //   item.paths[0][1] === "BB" &&
+    //   item.paths[1][1] === "DD" &&
+    //   item.paths[0][2] === "EE" &&
+    //   item.paths[1][2] === "JJ";
+    // // item.paths[0][1] === "DD" &&
+    // // item.paths[1][1] === "JJ" &&
+    // // item.paths[0][2] === "BB" &&
+    // // item.paths[1][2] === "HH";
+
     const remainingValves = new Set(item.unvisited);
     const opened = new Set(item.opened);
+
+    if (item.minutes.every((m) => m <= 0)) continue;
+
+    // logIf(cond, "start p", item.pressure);
+    // logIf(cond, "start v", item.valves);
+    // logIf(cond, "start m", item.minutes);
 
     const [p1, p2] = item.valves.map((valve, index) => {
       remainingValves.delete(valve);
@@ -133,34 +151,71 @@ while (p2Queue.length) {
       }
       return 0;
     });
+    // logIf(cond, "end m", item.minutes);
+    // logIf(cond, "end p", p1, p2);
 
     const newPressure = item.pressure + p1 + p2;
+    // logIf(cond, "newPressure", newPressure);
     if (newPressure > maxPressure) {
       maxPressure = newPressure;
     }
 
-    const newValves = item.valves.filter((_, i) => item.minutes[i] > 0);
-    newValves.forEach((v, i) => {
-      [...remainingValves].forEach((valve) => {
+    const remArr = [...remainingValves];
+    const remItems = item.valves.filter((_, i) => item.minutes[i] >= 0);
+
+    remArr.forEach((valve) => {
+      remItems.forEach((v, index) => {
         if (v !== valve) {
           const dist = distances[v][valve];
 
-          const valves = [...item.valves];
-          valves[i] = valve;
+          const newMinutes = [...item.minutes];
+          newMinutes[index] -= dist;
 
-          const minutes = [...item.minutes];
-          minutes[i] = item.minutes[i] - dist;
+          const valves = [...item.valves];
+          valves[index] = valve;
+
+          // const paths = [...item.paths];
+          // paths[index] = [...item.paths[index], valve];
+
+          // const minsPath = [...item.minsPath];
+          // minsPath[index] = [...item.minsPath[index], newMinutes[index]];
 
           p2Queue.push({
             valves,
-            minutes,
-            opened,
+            minutes: newMinutes,
             pressure: newPressure,
             unvisited: remainingValves,
+            opened,
+            // paths,
+            // minsPath,
           });
         }
       });
     });
+
+    if (remArr.length % 2 === 1) {
+      const remValve = remArr[remArr.length - 1];
+      item.valves.forEach((v, index) => {
+        if (item.minutes[index] > 0) {
+          const dist = distances[v][remValve];
+
+          const newMinutes = [...item.minutes];
+          newMinutes[index] -= dist;
+
+          const valves = [...item.valves];
+          valves[index] = remValve;
+
+          p2Queue.push({
+            valves,
+            minutes: newMinutes,
+            pressure: newPressure,
+            unvisited: remainingValves,
+            opened,
+          });
+        }
+      });
+    }
   }
 }
 console.log("Max pressure:", maxPressure);
+// 1258 low
