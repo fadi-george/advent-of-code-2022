@@ -1,6 +1,6 @@
 import { keyToPoint, pointToKey, readInput } from "../helpers";
 
-const useSample = true;
+const useSample = false;
 const input = readInput(useSample, "\n");
 
 const grid = new Map<string, string>();
@@ -73,74 +73,70 @@ console.log("Places: ", count);
 maxX = Math.min(maxX, maxPos);
 maxY = Math.min(maxY, maxPos);
 
-const ranges: Record<number, number[][]> = {};
+const ranges: number[][][] = [];
 sensors.forEach(([x, y, dist]) => {
   for (let i = y - dist; i <= y + dist; i++) {
     const xDiff = Math.abs(dist - Math.abs(i - y));
 
     if (i >= 0 && i <= maxY) {
-      let range = [x - xDiff, i, x + xDiff, i];
+      let range = [x - xDiff, x + xDiff];
 
       if (range[0] < 0) range[0] = 0;
-      if (range[2] < 0) range[2] = maxX;
+      if (range[1] < 0) range[1] = maxX;
       if (range[0] > maxX) range[0] = maxX;
-      if (range[2] > maxX) range[2] = maxX;
+      if (range[1] > maxX) range[1] = maxX;
 
       if (!ranges[i]) ranges[i] = [];
       ranges[i].push(range);
     }
   }
 });
-Object.keys(ranges).forEach((row) => {
-  const currRanges = ranges[+row];
-  if (currRanges && currRanges.length > 0) {
-    currRanges.sort((a, b) => a[0] - b[0]);
 
-    let newRanges: number[][] = [];
-    let tempRange = currRanges[0];
-    let i;
+ranges.forEach((currRanges, y) => {
+  currRanges.sort((a, b) => a[0] - b[0]);
 
-    for (i = 1; i < currRanges.length; i++) {
-      const [x1, y1, x2] = tempRange;
-      const [x3, , x4] = currRanges[i];
+  let newRanges: number[][] = [];
+  let tempRange = currRanges[0];
 
-      if (x1 <= x3 && x3 <= x2) {
-        const endX = x4 > x2 ? x4 : x2;
-        tempRange = [x1, y1, endX, y1];
-      } else if (x3 < x1 && x4 >= x2) {
-        const minX = x3;
-        const endX = x4 > x2 ? x4 : x2;
-        tempRange = [minX, y1, endX, y1];
-      } else {
-        newRanges.push(tempRange);
-        tempRange = currRanges[i];
-      }
+  for (let i = 1; i < currRanges.length; i++) {
+    const [x1, x2] = tempRange;
+    const [x3, x4] = currRanges[i];
+
+    if (x1 <= x3 && x3 <= x2) {
+      const endX = x4 > x2 ? x4 : x2;
+      tempRange = [x1, endX];
+    } else if (x3 < x1 && x4 >= x2) {
+      const minX = x3;
+      const endX = x4 > x2 ? x4 : x2;
+      tempRange = [minX, endX];
+    } else {
+      newRanges.push(tempRange);
+      tempRange = currRanges[i];
     }
-
-    newRanges.push(tempRange);
-    ranges[+row] = newRanges;
   }
+
+  newRanges.push(tempRange);
+  ranges[y] = newRanges;
 });
 
-let beaconX = 0;
-let beaconY = 0;
-for (const [row, currRanges] of Object.entries(ranges)) {
-  beaconY = +row;
+let x = 0;
+let y = 0;
+for (const [row, currRanges] of ranges.entries()) {
+  y = +row;
+  x = 0;
+  for (const [x1, x2] of currRanges) {
+    if (x1 <= x && x <= x2) {
+      x = x2 + 1;
 
-  beaconX = 0;
-  for (const [x1, y1, x2] of currRanges) {
-    if (x1 <= beaconX && beaconX <= x2) {
-      beaconX = x2 + 1;
-
-      if (beaconX > maxX) {
-        beaconX = -1;
+      if (x > maxX) {
+        x = -1;
         break;
       }
     }
   }
 
-  if (beaconX >= 0 && beaconX <= maxX) {
+  if (x >= 0 && x <= maxX) {
     break;
   }
 }
-console.log("Tuning Frequency: ", beaconX * 4000000 + beaconY);
+console.log("Tuning Frequency: ", x * 4000000 + y);
