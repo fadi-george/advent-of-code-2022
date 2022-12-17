@@ -1,7 +1,7 @@
-import { readInput } from "../helpers";
+import { printObject, readInput } from "../helpers";
 import { findPathWithCost } from "../dijkstra";
 
-const useSample = false;
+const useSample = true;
 const input = readInput(useSample);
 
 const graph = {};
@@ -50,137 +50,173 @@ valveNames.forEach((valve) => {
 
 // don't need to visit valves with no flow rate
 const valvesWithFlow = valveNames.filter((valve) => valves[valve].flowRate);
-let queue = [
-  {
-    valve: "AA",
-    minutes: 30,
-    pressure: 0,
-    unvisited: new Set(valvesWithFlow),
-  },
-];
 
-let maxPressure = 0;
+const getSinglePath = (start) => {
+  let maxPressure = 0;
+  let bestPath = [];
+  let queue = [start];
 
-while (queue.length) {
-  queue = queue.sort((a, b) => b.pressure - a.pressure);
-  const item = queue.shift();
+  while (queue.length) {
+    queue = queue.sort((a, b) => b.pressure - a.pressure);
+    const item = queue.shift();
 
-  if (item) {
-    if (item.minutes <= 0) continue;
-
-    const remainingValves = new Set(item.unvisited);
-    remainingValves.delete(item.valve);
-
-    const flowRate = valves[item.valve].flowRate;
-    let mins = item.minutes;
-    let pressure = 0;
-
-    if (flowRate) {
-      mins--;
-      pressure = flowRate * mins;
-    }
-
-    if (mins >= 0) {
-      const newPressure = item.pressure + pressure;
-      if (newPressure > maxPressure) {
-        maxPressure = newPressure;
+    if (item) {
+      if (item.minutes <= 0) {
+        continue;
       }
 
-      [...remainingValves].forEach((valve) => {
-        const dist = distances[item.valve][valve];
-        queue.push({
-          valve,
-          minutes: mins - dist,
-          pressure: newPressure,
-          unvisited: remainingValves,
+      const remainingValves = new Set(item.unvisited);
+      const opened = new Set(item.opened);
+      remainingValves.delete(item.valve);
+
+      const flowRate = valves[item.valve].flowRate;
+      let mins = item.minutes;
+      let pressure = 0;
+
+      if (flowRate) {
+        mins--;
+        pressure = flowRate * mins;
+        opened.add(item.valve);
+      }
+
+      if (mins > 0) {
+        const newPressure = item.pressure + pressure;
+        if (newPressure > maxPressure) {
+          maxPressure = newPressure;
+          bestPath = item.paths;
+        }
+
+        [...remainingValves].forEach((valve) => {
+          const dist = distances[item.valve][valve];
+          queue.push({
+            valve,
+            minutes: mins - dist,
+            opened,
+            pressure: newPressure,
+            unvisited: remainingValves,
+            path: [...item.path, item.valve],
+          });
         });
-      });
+      }
     }
   }
-}
-console.log("Max pressure:", maxPressure);
 
-// part 2
-let p2Queue = [
-  {
-    valves: ["AA", "AA"],
-    minutes: [26, 26],
+  return { maxPressure, path: bestPath };
+};
+// console.time("bfs");
+console.log(
+  "Part 1:",
+  getSinglePath({
+    minutes: 30,
+    opened: new Set(),
+    path: [],
     pressure: 0,
     unvisited: new Set(valvesWithFlow),
-    opened: new Set(),
-  },
-];
-maxPressure = 0;
+    valve: "AA",
+  }).maxPressure
+);
+// console.timeEnd("bfs");
 
-console.time("P2");
-while (p2Queue.length) {
-  p2Queue = p2Queue.sort((a, b) => b.pressure - a.pressure);
-  const item = p2Queue.shift();
+// console.time("dfs");
+let maxPressure = 0;
+const possiblePaths: { path: string[]; pressure: number }[] = [];
 
-  if (item) {
-    const remainingValves = new Set(item.unvisited);
-    const opened = new Set(item.opened);
-
-    if (item.minutes.every((m) => m <= 0)) continue;
-
-    const [p1, p2] = item.valves.map((valve, index) => {
-      remainingValves.delete(valve);
-      const flowRate = valves[valve].flowRate;
-      let mins = item.minutes[index];
-
-      if (flowRate && mins > 0 && !opened.has(valve)) {
-        opened.add(valve);
-        mins--;
-        item.minutes[index] = mins;
-        return flowRate * mins;
-      }
-      return 0;
+const dfs = (item) => {
+  if (item.minutes <= 0) {
+    possiblePaths.push({
+      path: item.path,
+      pressure: item.pressure,
     });
+    return;
+  }
 
-    const newPressure = item.pressure + p1 + p2;
+  const remainingValves = new Set(item.unvisited);
+  const opened = new Set(item.opened);
+  remainingValves.delete(item.valve);
+
+  const flowRate = valves[item.valve].flowRate;
+  let mins = item.minutes;
+  let pressure = 0;
+
+  if (flowRate) {
+    mins--;
+    pressure = flowRate * mins;
+    opened.add(item.valve);
+  }
+
+  if (mins > 0) {
+    const newPressure = item.pressure + pressure;
     if (newPressure > maxPressure) {
       maxPressure = newPressure;
     }
 
-    const [v1, v2] = item.valves;
-    const remArr = [...remainingValves];
-
-    for (let i = 0; i < remArr.length; i++) {
-      for (let j = i + 1; j < remArr.length; j++) {
-        const rv1 = remArr[i];
-        const rv2 = remArr[j];
-
-        const dist1 = distances[v1][rv1];
-        const dist2 = distances[v1][rv2];
-        const dist3 = distances[v2][rv1];
-        const dist4 = distances[v2][rv2];
-
-        // check combined min distance
-        const valves = [...item.valves];
-        valves[0] = rv1;
-        valves[1] = rv2;
-
-        let dist = [dist1, dist4];
-        if (dist1 + dist4 >= dist2 + dist3) {
-          dist = [dist2, dist3];
-          valves[0] = rv2;
-          valves[1] = rv1;
-        }
-
-        const minutes = [...item.minutes];
-        minutes[0] -= dist[0];
-        minutes[1] -= dist[1];
-
-        p2Queue.push({
-          valves,
-          minutes,
-          opened,
-          pressure: newPressure,
-          unvisited: remainingValves,
-        });
-      }
+    if (remainingValves.size == 0) {
+      possiblePaths.push({
+        path: [...item.path, item.valve],
+        pressure: newPressure,
+      });
     }
+
+    [...remainingValves].forEach((valve) => {
+      const dist = distances[item.valve][valve];
+      dfs({
+        minutes: mins - dist,
+        opened,
+        path: [...item.path, item.valve],
+        pressure: newPressure,
+        unvisited: remainingValves,
+        valve,
+      });
+    });
   }
-}
-console.log("Max pressure:", maxPressure);
-console.timeEnd("P2");
+};
+
+// part 2
+dfs({
+  valves: "AA",
+  minutes: 26,
+  unv: new Set(),
+  pressure: 0,
+  unvisited: new Set(valveNames),
+  path: [],
+});
+
+// console.log(possiblePaths.length);
+// for (let i = 0; i < possiblePaths.length; i++) {
+//   for (let j = i + 1; j < possiblePaths.length; j++) {
+//     const { path: path1, pressure: score1 } = possiblePaths[i];
+//     const { path: path2, pressure: score2 } = possiblePaths[j];
+//     const valves1 = new Set(path1.slice(1));
+//     // const valves2 = new Set(path2.slice(1));
+
+//     // const maxLen = Math.max(path1.length, path2.length);
+
+//     // let count = 1;
+//     // for (let k = 1; k < maxLen; k++) {
+//     //   if (path1[k] !== path2[k]) {
+//     //     count++;
+//     //   } else {
+//     //     break;
+//     //   }
+//     // }
+//     let count = 0;
+//     for (let k = 1; k < path2.length; k++) {
+//       if (valves1.has(path2[k])) {
+//         count++;
+//       }
+//     }
+
+//     if (count === 0) {
+//       printObject({
+//         count,
+//         path1,
+//         path2,
+//       });
+//     }
+
+//     // const sameValves = path1.path.filter((valve) => path2.path.includes(valve));
+//     // if (sameValves.length === 0) {
+//     //   console.log(path1.pressure + path2.pressure);
+//     // }
+//   }
+// }

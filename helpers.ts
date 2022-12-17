@@ -26,3 +26,6 @@ export const logIf = (condition: boolean, ...args: any[]) => {
     console.log(...args);
   }
 };
+
+export const printObject = (obj: Record<string, unknown>) =>
+  console.log(JSON.stringify(obj, null, "  "));

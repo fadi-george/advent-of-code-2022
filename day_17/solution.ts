@@ -50,6 +50,19 @@ const drawRock = (rock: string[][], ch: string = "@") => {
   });
 };
 
+const cleanUp = () => {
+  let blockedCount = 0;
+  for (let i = grid.length - 1; i < grid.length; i++) {
+    const row = grid[i];
+    for (let j = 0; j < row.length; j++) {
+      if (row[j] === "@") {
+        blockedCount++;
+        row[j] = "#";
+      }
+    }
+  }
+};
+
 const WIDTH = 7;
 const shiftRock = (rock: string[][]) => {
   const currGust = gust[gInd++];
@@ -119,7 +132,7 @@ const fallDown = (rock: string[][]) => {
 };
 
 let currHeight = 0;
-for (let i = 0; i < 2022; i++) {
+for (let i = 0; i < 20; i++) {
   let moving = true;
   let currRock = rocks[i % rocks.length];
 
@@ -154,7 +167,7 @@ for (let i = 0; i < 2022; i++) {
     }
   }
 
-  grid.slice(0);
+  cleanUp();
 }
 
 console.log("Grid Height: ", currHeight);
