@@ -1,6 +1,11 @@
 {
+  "scripts": {
+    "solve": "bun ./solve.ts"
+  },
   "devDependencies": {
     "@types/node": "^18.11.10",
+    "commander": "^9.4.1",
+    "cross-env": "^7.0.3",
     "ts-node": "^10.9.1"
   }
 }
