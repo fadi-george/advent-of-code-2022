@@ -1,37 +1,33 @@
 import { readInput } from "../helpers";
 
-const useSample = false;
+const useSample = true;
 
-const r1 = [["#", "#", "#", "#"]];
-const r2 = [
-  [".", "#", "."],
-  ["#", "#", "#"],
-  [".", "#", "."],
+const rocks = [
+  [["#", "#", "#", "#"]],
+  [
+    [".", "#", "."],
+    ["#", "#", "#"],
+    [".", "#", "."],
+  ],
+  [
+    [".", ".", "#"],
+    [".", ".", "#"],
+    ["#", "#", "#"],
+  ],
+  [["#"], ["#"], ["#"], ["#"]],
+  [
+    ["#", "#"],
+    ["#", "#"],
+  ],
 ];
-const r3 = [
-  [".", ".", "#"],
-  [".", ".", "#"],
-  ["#", "#", "#"],
-];
-const r4 = [["#"], ["#"], ["#"], ["#"]];
-const r5 = [
-  ["#", "#"],
-  ["#", "#"],
-];
-const rocks = [r1, r2, r3, r4, r5];
-let grid: string[][] = [];
-
-// types
-type Position = { row: number; col: number };
 
 // globals
-const gust = readInput(useSample, "");
-const position = { row: 0, col: 0 };
-let highestRock = 0;
-let gInd = 0;
+const WIDTH = 7;
+
+const gusts = readInput(useSample, "");
 
 // helpers
-const printGrid = () => {
+const printGrid = ({ grid }: { grid: string[][] }) => {
   grid.forEach((row) => {
     console.log(row.join(""));
   });
@@ -39,135 +35,235 @@ const printGrid = () => {
   console.log("\n");
 };
 
-const drawRock = (rock: string[][], ch: string = "@") => {
+type Position = { row: number; col: number };
+
+const drawRock = ({
+  grid,
+  rock,
+  ch,
+  position,
+}: {
+  grid: string[][];
+  rock: string[][];
+  ch: string;
+  position: Position;
+}) => {
   const rockLength = rock.length - 1;
   const { row, col } = position;
 
   rock.forEach((r, i) => {
     r.forEach((c, j) => {
-      grid[row + i - rockLength][col + j] = c === "." ? "." : ch;
+      // grid[row + i - rockLength][col + j] = c === "." ? "." : ch;
+      if (grid[row + i - rockLength][col + j] !== "#") {
+        grid[row + i - rockLength][col + j] = c === "." ? "." : ch;
+      }
     });
   });
 };
 
-const cleanUp = () => {
-  let blockedCount = 0;
-  for (let i = grid.length - 1; i < grid.length; i++) {
-    const row = grid[i];
-    for (let j = 0; j < row.length; j++) {
-      if (row[j] === "@") {
-        blockedCount++;
-        row[j] = "#";
-      }
-    }
-  }
-};
-
-const WIDTH = 7;
-const shiftRock = (rock: string[][]) => {
-  const currGust = gust[gInd++];
-  if (gInd >= gust.length) gInd = 0;
-
-  // console.log("Moving: ", currGust);
-  const { col } = position;
+const isValidIntersection = ({
+  grid,
+  position: { row, col },
+  rock,
+}: {
+  grid: string[][];
+  position: Position;
+  rock: string[][];
+}) => {
   const w = rock[0].length;
   const h = rock.length;
 
-  if (currGust === ">") {
-    if (col + rock[0].length <= WIDTH - 1) {
-      for (let r = 0; r < rock.length; r++) {
-        const ch = grid[position.row - r][col + w];
-        const rCh = rock[h - r - 1][col + w];
-        if (ch !== "." && rCh !== ".") {
-          return;
-        }
-      }
+  for (let r = 0; r < h; r++) {
+    for (let c = 0; c < w; c++) {
+      const ch = grid[row - r][col + c];
+      const rCh = rock[h - r - 1][c];
 
-      drawRock(rock, ".");
-      position.col++;
-      drawRock(rock);
-      return;
-    }
-  } else if (currGust === "<") {
-    if (col >= 1) {
-      for (let r = 0; r < rock.length; r++) {
-        const ch = grid[position.row - r][col - 1];
-        const rCh = rock[h - r - 1][col - 1];
-        if (ch !== "." && rCh !== ".") {
-          return;
-        }
+      if (ch !== "." && rCh !== "." && ch !== "@") {
+        return false;
       }
-
-      drawRock(rock, ".");
-      position.col--;
-      drawRock(rock);
-      return;
     }
   }
-};
-
-const fallDown = (rock: string[][]) => {
-  // console.log("Falling down");
-  const rockLen = rock[0].length;
-
-  if (position.row + 1 >= grid.length) return false;
-
-  const gridRow = grid[position.row + 1];
-  for (let j = 0; j < rockLen; j++) {
-    const ch = gridRow[j + position.col];
-    const rockCh = rock[rock.length - 1][j];
-
-    if (ch !== "." && rockCh !== ".") {
-      return false;
-    }
-  }
-
-  drawRock(rock, ".");
-  position.row++;
-  drawRock(rock);
-
-  highestRock = position.row - (rock.length - 1);
 
   return true;
 };
 
-let currHeight = 0;
-for (let i = 0; i < 20; i++) {
-  let moving = true;
-  let currRock = rocks[i % rocks.length];
+const shiftRock = ({
+  grid,
+  rock,
+  gust,
+  position,
+}: {
+  grid: string[][];
+  rock: string[][];
+  gust: string;
+  position: Position;
+}) => {
+  const { col } = position;
 
-  const diff = highestRock - 3 - currRock.length;
-  if (diff) {
-    const len = Math.abs(diff);
+  if (gust === ">") {
+    if (col + rock[0].length <= WIDTH - 1) {
+      const valid = isValidIntersection({
+        grid,
+        position: {
+          row: position.row,
+          col: position.col + 1,
+        },
+        rock,
+      });
+      if (!valid) return;
+
+      drawRock({ grid, rock, ch: ".", position });
+      position.col++;
+      drawRock({ grid, rock, ch: "@", position });
+
+      return;
+    }
+  }
+  if (gust === "<") {
+    if (col >= 1) {
+      const valid = isValidIntersection({
+        grid,
+        position: {
+          row: position.row,
+          col: position.col - 1,
+        },
+        rock,
+      });
+
+      if (!valid) return;
+
+      drawRock({ grid, rock, ch: ".", position });
+      position.col--;
+      drawRock({ grid, rock, ch: "@", position });
+      return;
+    }
+  }
+};
+
+const fallDown = ({
+  grid,
+  rock,
+  position,
+}: {
+  grid: string[][];
+  rock: string[][];
+  position: Position;
+}) => {
+  if (position.row + 1 >= grid.length) return false;
+
+  const isValid = isValidIntersection({
+    grid,
+    position: {
+      row: position.row + 1,
+      col: position.col,
+    },
+    rock,
+  });
+  if (!isValid) return false;
+
+  drawRock({ grid, rock, ch: ".", position });
+  position.row++;
+  drawRock({ grid, rock, ch: "@", position });
+
+  return true;
+};
+
+const getKey = (rockInd: number, gInd: number) => `${rockInd},${gInd}`;
+
+const periodStart = gusts.length;
+
+const run = (amount: number) => {
+  let grid: string[][] = [];
+
+  const heightCache = {};
+  const position = { row: 0, col: 0 };
+
+  let gInd = 0;
+  let periodInd = 0;
+  let highestRock = 0;
+  let towerHeight = 0;
+  let offset = 0;
+
+  for (let i = 0; i < amount; i++) {
+    let oldLength = grid.length;
+    let rockInd = i % rocks.length;
+    let currRock = rocks[rockInd];
+
+    const key = getKey(rockInd, gInd);
+    if (heightCache[key]) {
+      if (!periodInd) periodInd = i;
+      offset += heightCache[key].diff;
+      gInd = heightCache[key].gInd;
+      continue;
+    }
+
+    const diff = 3 + currRock.length;
     grid = [
-      ...Array(len)
+      ...Array(diff)
         .fill("")
         .map(() => Array(7).fill(".")),
       ...grid,
     ];
-    highestRock += len - 1;
-    currHeight += len;
-  }
 
-  position.row = highestRock - 3;
-  position.col = 2;
-  drawRock(currRock);
-  // printGrid();
+    position.row = 0 + currRock.length - 1;
+    position.col = 2;
+    drawRock({ grid, rock: currRock, ch: "@", position });
 
-  while (moving) {
-    shiftRock(currRock);
-    // printGrid();
-    const valid = fallDown(currRock);
-    // printGrid();
+    let falling = true;
+    let gustStartInd = gInd;
 
-    if (!valid) {
-      drawRock(currRock, "#");
-      // printGrid();
-      moving = false;
+    while (falling) {
+      const currGust = gusts[gInd++];
+      if (gInd >= gusts.length) gInd = 0;
+
+      shiftRock({ grid, rock: currRock, gust: currGust, position });
+
+      const valid = fallDown({ grid, rock: currRock, position });
+
+      if (!valid) {
+        drawRock({ grid, rock: currRock, ch: "#", position });
+        falling = false;
+
+        highestRock = grid.findIndex((row) => row.includes("#"));
+        grid = grid.slice(highestRock);
+
+        if (i > periodStart) {
+          heightCache[getKey(rockInd, gustStartInd)] = {
+            diff: grid.length - oldLength,
+            gInd,
+          };
+        }
+        towerHeight = grid.length;
+      }
     }
   }
 
-  cleanUp();
-}
+  return {
+    towerHeight: towerHeight + offset,
+    periodInd,
+    period: Object.keys(heightCache).length,
+    periodHeight: Object.keys(heightCache).reduce(
+      (acc, key) => acc + heightCache[key].diff,
+      0
+    ),
+  };
+};
 
-console.log("Grid Height: ", currHeight);
+const { periodInd, period, periodHeight } = run(periodStart * 2);
+
+const run2 = (amount: number) => {
+  if (periodInd > amount) return run(amount).towerHeight;
+
+  const { towerHeight: initialHeight } = run(periodInd);
+  const newAmount = amount - periodInd;
+
+  const count = Math.floor(newAmount / period);
+  const rem = newAmount % period;
+
+  const remHeight = run(periodInd + rem).towerHeight - initialHeight;
+
+  return initialHeight + count * periodHeight + remHeight;
+};
+
+console.log("Part 1: ", run2(2022));
+console.log("Part 2: ", run2(1000000000000));
