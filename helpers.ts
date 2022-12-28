@@ -27,6 +27,14 @@ export const logIf = (condition: boolean, ...args: any[]) => {
   }
 };
 
+export const printGrid = ({ grid }: { grid: string[][] }) => {
+  grid.forEach((row) => {
+    console.log(row.join(""));
+  });
+
+  console.log("\n");
+};
+
 export const printObject = (obj: Record<string, unknown>) =>
   console.log(JSON.stringify(obj, null, 2));
 

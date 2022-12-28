@@ -1,125 +1,357 @@
-# --- Day 15: Beacon Exclusion Zone ---
+# --- Day 17: Pyroclastic Flow ---
 
-You feel the ground rumble again as the distress signal leads you to a large network of subterranean tunnels. You don't have time to search them all, but you don't need to: your pack contains a set of deployable sensors that you imagine were originally built to locate lost Elves.
+Your handheld device has located an alternative exit from the cave for you and the elephants. The ground is rumbling almost continuously now, but the strange valves bought you some time. It's definitely getting warmer in here, though.
 
-The sensors aren't very powerful, but that's okay; your handheld device indicates that you're close enough to the source of the distress signal to use them. You pull the emergency sensor system out of your pack, hit the big button on top, and the sensors zoom off down the tunnels.
+The tunnels eventually open into a very tall, narrow chamber. Large, oddly-shaped rocks are falling into the chamber from above, presumably due to all the rumbling. If you can't work out where the rocks will fall next, you might be crushed!
 
-Once a sensor finds a spot it thinks will give it a good reading, it attaches itself to a hard surface and begins monitoring for the nearest signal source beacon. Sensors and beacons always exist at integer coordinates. Each sensor knows its own position and can determine the position of a beacon precisely; however, sensors can only lock on to the one beacon closest to the sensor as measured by the Manhattan distance. (There is never a tie where two beacons are the same distance to a sensor.)
-
-It doesn't take long for the sensors to report back their positions and closest beacons (your puzzle input). For example:
+The five types of rocks have the following peculiar shapes, where `#` is rock and `.` is empty space:
 
 ```
-Sensor at x=2, y=18: closest beacon is at x=-2, y=15
-Sensor at x=9, y=16: closest beacon is at x=10, y=16
-Sensor at x=13, y=2: closest beacon is at x=15, y=3
-Sensor at x=12, y=14: closest beacon is at x=10, y=16
-Sensor at x=10, y=20: closest beacon is at x=10, y=16
-Sensor at x=14, y=17: closest beacon is at x=10, y=16
-Sensor at x=8, y=7: closest beacon is at x=2, y=10
-Sensor at x=2, y=0: closest beacon is at x=2, y=10
-Sensor at x=0, y=11: closest beacon is at x=2, y=10
-Sensor at x=20, y=14: closest beacon is at x=25, y=17
-Sensor at x=17, y=20: closest beacon is at x=21, y=22
-Sensor at x=16, y=7: closest beacon is at x=15, y=3
-Sensor at x=14, y=3: closest beacon is at x=15, y=3
-Sensor at x=20, y=1: closest beacon is at x=15, y=3
+####
+
+.#.
+###
+.#.
+
+..#
+..#
+###
+
+#
+#
+#
+#
+
+##
+##
 ```
 
-So, consider the sensor at 2,18; the closest beacon to it is at -2,15. For the sensor at 9,16, the closest beacon to it is at 10,16.
+The rocks fall in the order shown above: first the - shape, then the + shape, and so on. Once the end of the list is reached, the same order repeats: the - shape falls first, sixth, 11th, 16th, etc.
 
-Drawing sensors as S and beacons as B, the above arrangement of sensors and beacons looks like this:
+The rocks don't spin, but they do get pushed around by jets of hot gas coming out of the walls themselves. A quick scan reveals the effect the jets of hot gas will have on the rocks as they fall (your puzzle input).
 
-```
-               1    1    2    2
-     0    5    0    5    0    5
-
-0 ....S.......................
-1 ......................S.....
-2 ...............S............
-3 ................SB..........
-4 ............................
-5 ............................
-6 ............................
-7 ..........S.......S.........
-8 ............................
-9 ............................
-10 ....B.......................
-11 ..S.........................
-12 ............................
-13 ............................
-14 ..............S.......S.....
-15 B...........................
-16 ...........SB...............
-17 ................S..........B
-18 ....S.......................
-19 ............................
-20 ............S......S........
-21 ............................
-22 .......................B....
-```
-
-This isn't necessarily a comprehensive map of all beacons in the area, though. Because each sensor only identifies its closest beacon, if a sensor detects a beacon, you know there are no other beacons that close or closer to that sensor. There could still be beacons that just happen to not be the closest beacon to any sensor. Consider the sensor at 8,7:
+For example, suppose this was the jet pattern in your cave:
 
 ```
-               1    1    2    2
-     0    5    0    5    0    5
-
--2 ..........#.................
--1 .........###................
-0  ....S...#####...............
-1  .......#######........S.....
-2  ......#########S............
-3  .....###########SB..........
-4  ....#############...........
-5  ...###############..........
-6  ..#################.........
-7  .#########S#######S#........
-8  ..#################.........
-9  ...###############..........
-10 ....B############...........
-11 ..S..###########............
-12 ......#########.............
-13 .......#######..............
-14 ........#####.S.......S.....
-15 B........###................
-16 ..........#SB...............
-17 ................S..........B
-18 ....S.......................
-19 ............................
-20 ............S......S........
-21 ............................
-22 .......................B....
+>>><<><>><<<>><>>><<<>>><<<><<<>><>><<>>
 ```
 
-This sensor's closest beacon is at 2,10, and so you know there are no beacons that close or closer (in any positions marked #).
+In jet patterns, < means a push to the left, while > means a push to the right. The pattern above means that the jets will push a falling rock right, then right, then right, then left, then left, then right, and so on. If the end of the list is reached, it repeats.
 
-None of the detected beacons seem to be producing the distress signal, so you'll need to work out where the distress beacon is by working out where it isn't. For now, keep things simple by counting the positions where a beacon cannot possibly be along just a single row.
+The tall, vertical chamber is exactly seven units wide. Each rock appears so that its left edge is two units away from the left wall and its bottom edge is three units above the highest rock in the room (or the floor, if there isn't one).
 
-So, suppose you have an arrangement of beacons and sensors like in the example above and, just in the row where y=10, you'd like to count the number of positions a beacon cannot possibly exist. The coverage from all sensors near that row looks like this:
+After a rock appears, it alternates between being pushed by a jet of hot gas one unit (in the direction indicated by the next symbol in the jet pattern) and then falling one unit down. If any movement would cause any part of the rock to move into the walls, floor, or a stopped rock, the movement instead does not occur. If a downward movement would have caused a falling rock to move into the floor or an already-fallen rock, the falling rock stops where it is (having landed on something) and a new rock immediately begins falling.
+
+Drawing falling rocks with @ and stopped rocks with #, the jet pattern in the example above manifests as follows:
 
 ```
-                 1    1    2    2
-       0    5    0    5    0    5
+The first rock begins falling:
+|..@@@@.|
+|.......|
+|.......|
+|.......|
++-------+
 
-9 ...#########################...
-10 ..####B######################..
-11 .###S#############.###########.
+Jet of gas pushes rock right:
+|...@@@@|
+|.......|
+|.......|
+|.......|
++-------+
+
+Rock falls 1 unit:
+|...@@@@|
+|.......|
+|.......|
++-------+
+
+Jet of gas pushes rock right, but nothing happens:
+|...@@@@|
+|.......|
+|.......|
++-------+
+
+Rock falls 1 unit:
+|...@@@@|
+|.......|
++-------+
+
+Jet of gas pushes rock right, but nothing happens:
+|...@@@@|
+|.......|
++-------+
+
+Rock falls 1 unit:
+|...@@@@|
++-------+
+
+Jet of gas pushes rock left:
+|..@@@@.|
++-------+
+
+Rock falls 1 unit, causing it to come to rest:
+|..####.|
++-------+
+
+A new rock begins falling:
+|...@...|
+|..@@@..|
+|...@...|
+|.......|
+|.......|
+|.......|
+|..####.|
++-------+
+
+Jet of gas pushes rock left:
+|..@....|
+|.@@@...|
+|..@....|
+|.......|
+|.......|
+|.......|
+|..####.|
++-------+
+
+Rock falls 1 unit:
+|..@....|
+|.@@@...|
+|..@....|
+|.......|
+|.......|
+|..####.|
++-------+
+
+Jet of gas pushes rock right:
+|...@...|
+|..@@@..|
+|...@...|
+|.......|
+|.......|
+|..####.|
++-------+
+
+Rock falls 1 unit:
+|...@...|
+|..@@@..|
+|...@...|
+|.......|
+|..####.|
++-------+
+
+Jet of gas pushes rock left:
+|..@....|
+|.@@@...|
+|..@....|
+|.......|
+|..####.|
++-------+
+
+Rock falls 1 unit:
+|..@....|
+|.@@@...|
+|..@....|
+|..####.|
++-------+
+
+Jet of gas pushes rock right:
+|...@...|
+|..@@@..|
+|...@...|
+|..####.|
++-------+
+
+Rock falls 1 unit, causing it to come to rest:
+|...#...|
+|..###..|
+|...#...|
+|..####.|
++-------+
+
+A new rock begins falling:
+|....@..|
+|....@..|
+|..@@@..|
+|.......|
+|.......|
+|.......|
+|...#...|
+|..###..|
+|...#...|
+|..####.|
++-------+
 ```
 
-In this example, in the row where y=10, there are 26 positions where a beacon cannot be present.
+The moment each of the next few rocks begins falling, you would see this:
 
-Consult the report from the sensors you just deployed. In the row where y=2000000, how many positions cannot contain a beacon?
+```
+|..@....|
+|..@....|
+|..@....|
+|..@....|
+|.......|
+|.......|
+|.......|
+|..#....|
+|..#....|
+|####...|
+|..###..|
+|...#...|
+|..####.|
++-------+
 
-Your puzzle answer was `5508234`.
+|..@@...|
+|..@@...|
+|.......|
+|.......|
+|.......|
+|....#..|
+|..#.#..|
+|..#.#..|
+|#####..|
+|..###..|
+|...#...|
+|..####.|
++-------+
+
+|..@@@@.|
+|.......|
+|.......|
+|.......|
+|....##.|
+|....##.|
+|....#..|
+|..#.#..|
+|..#.#..|
+|#####..|
+|..###..|
+|...#...|
+|..####.|
++-------+
+
+|...@...|
+|..@@@..|
+|...@...|
+|.......|
+|.......|
+|.......|
+|.####..|
+|....##.|
+|....##.|
+|....#..|
+|..#.#..|
+|..#.#..|
+|#####..|
+|..###..|
+|...#...|
+|..####.|
++-------+
+
+|....@..|
+|....@..|
+|..@@@..|
+|.......|
+|.......|
+|.......|
+|..#....|
+|.###...|
+|..#....|
+|.####..|
+|....##.|
+|....##.|
+|....#..|
+|..#.#..|
+|..#.#..|
+|#####..|
+|..###..|
+|...#...|
+|..####.|
++-------+
+
+|..@....|
+|..@....|
+|..@....|
+|..@....|
+|.......|
+|.......|
+|.......|
+|.....#.|
+|.....#.|
+|..####.|
+|.###...|
+|..#....|
+|.####..|
+|....##.|
+|....##.|
+|....#..|
+|..#.#..|
+|..#.#..|
+|#####..|
+|..###..|
+|...#...|
+|..####.|
++-------+
+
+|..@@...|
+|..@@...|
+|.......|
+|.......|
+|.......|
+|....#..|
+|....#..|
+|....##.|
+|....##.|
+|..####.|
+|.###...|
+|..#....|
+|.####..|
+|....##.|
+|....##.|
+|....#..|
+|..#.#..|
+|..#.#..|
+|#####..|
+|..###..|
+|...#...|
+|..####.|
++-------+
+
+|..@@@@.|
+|.......|
+|.......|
+|.......|
+|....#..|
+|....#..|
+|....##.|
+|##..##.|
+|######.|
+|.###...|
+|..#....|
+|.####..|
+|....##.|
+|....##.|
+|....#..|
+|..#.#..|
+|..#.#..|
+|#####..|
+|..###..|
+|...#...|
+|..####.|
++-------+
+```
+
+To prove to the elephants your simulation is accurate, they want to know how tall the tower will get after 2022 rocks have stopped (but before the 2023rd rock begins falling). In this example, the tower of rocks will be `3068` units tall.
+
+How many units tall will the tower of rocks be after 2022 rocks have stopped falling?
+
+Your puzzle answer was `3224`.
 
 # --- Part Two ---
 
-Your handheld device indicates that the distress signal is coming from a beacon nearby. The distress beacon is not detected by any sensor, but the distress beacon must have x and y coordinates each no lower than 0 and no larger than `4000000`.
+The elephants are not impressed by your simulation. They demand to know how tall the tower will be after `1000000000000` rocks have stopped! Only then will they feel confident enough to proceed through the cave.
 
-To isolate the distress beacon's signal, you need to determine its `tuning frequency`, which can be found by multiplying its x coordinate by `4000000` and then adding its y coordinate.
+In the example above, the tower would be `1514285714288` units tall!
 
-In the example above, the search space is smaller: instead, the x and y coordinates can each be at most 20. With this reduced search area, there is only a single position that could have a beacon: `x=14, y=11`. The tuning frequency for this distress beacon is `56000011`.
+How tall will the tower be after `1000000000000` rocks have stopped?
 
-Find the only possible position for the distress beacon. What is its tuning frequency?
-
-Your puzzle answer was `10457634860779`.
+Your puzzle answer was `1595988538691`.
