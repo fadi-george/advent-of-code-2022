@@ -4,9 +4,9 @@ import { findPathWithCost } from "../dijkstra";
 const useSample = false;
 const input = readInput(useSample);
 
-const graph = {};
-const distances = {};
-const valves = {};
+const graph: Record<string, Record<string, number>> = {};
+const distances: Record<string, Record<string, number>> = {};
+const valves: Record<string, { flowRate: number }> = {};
 
 input.forEach((line) => {
   const match = line.match(
@@ -46,7 +46,17 @@ valveNames.forEach((valve) => {
 });
 
 // get best flow rate for path for some time limit
-const dfs = ({ closedValves, pressure, time, valve }) => {
+const dfs = ({
+  closedValves,
+  pressure,
+  time,
+  valve,
+}: {
+  closedValves: Set<string>;
+  pressure: number;
+  time: number;
+  valve: string;
+}) => {
   if (time <= 0) return pressure;
   if (closedValves.size === 0) return pressure;
 
