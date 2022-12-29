@@ -1,6 +1,6 @@
 import { keyToPoint, pointToKey, readInput } from "../helpers"
 
-const input = readInput(true)
+const input = readInput(false)
 const grid = new Set<string>()
 
 input.forEach((line) => {
@@ -18,23 +18,15 @@ const getNeighbors = (x: number, y: number, z: number) => [
   [x, y, z + 1], // back
 ]
 
-let minX = Infinity
-let maxX = -Infinity
-let minY = Infinity
-let maxY = -Infinity
-let minZ = Infinity
-let maxZ = -Infinity
+let min = [Infinity, Infinity, Infinity]
+let max = [-Infinity, -Infinity, -Infinity]
 
 const gridArr = [...grid]
 const total = gridArr.reduce((acc, point) => {
   const [x, y, z] = point.split(",").map(Number)
 
-  minX = Math.min(minX, x)
-  maxX = Math.max(maxX, x)
-  minY = Math.min(minY, y)
-  maxY = Math.max(maxY, y)
-  minZ = Math.min(minZ, z)
-  maxZ = Math.max(maxZ, z)
+  min = [Math.min(min[0], x), Math.min(min[1], y), Math.min(min[2], z)]
+  max = [Math.max(max[0], x), Math.max(max[1], y), Math.max(max[2], z)]
 
   let surfaceArea = 6
 
@@ -56,34 +48,34 @@ const total = gridArr.reduce((acc, point) => {
 logP1(total)
 
 // Part 2
-minX--
-maxX++
-minY--
-maxY++
-minZ--
-maxZ++
+// Expand the grid by 1 in all directions for leeway
+min = [min[0] - 1, min[1] - 1, min[2] - 1]
+max = [max[0] + 1, max[1] + 1, max[2] + 1]
 
+const outsideSet = new Set<string>()
 const queue = [
   {
-    x: minX,
-    y: minY,
-    z: minZ,
+    x: min[0],
+    y: min[1],
+    z: min[2],
   },
 ]
-const outsideSet = new Set<string>()
+
+// Get points that are outside the blocks
 while (queue.length) {
   const item = queue.shift()
 
   if (!item) continue
-  const { x, y, z } = item
 
+  const { x, y, z } = item
   const neighbors = getNeighbors(x, y, z)
+
   neighbors.forEach(([i, j, k]) => {
     const newPoint = pointToKey(i, j, k)
 
-    if (i < minX || i > maxX) return
-    if (j < minY || j > maxY) return
-    if (k < minZ || k > maxZ) return
+    if (i < min[0] || i > max[0]) return
+    if (j < min[1] || j > max[1]) return
+    if (k < min[2] || k > max[2]) return
     if (grid.has(newPoint) || outsideSet.has(newPoint)) return
 
     outsideSet.add(newPoint)
@@ -91,25 +83,18 @@ while (queue.length) {
   })
 }
 
-let pocketArr = [...pocketSet]
-pocketArr.forEach((point) => {
-  if (outsideSet.has(point)) {
-    pocketSet.delete(point)
-  }
+// Remove points neighbors that are on the outside
+;[...pocketSet].forEach((point) => {
+  if (outsideSet.has(point)) pocketSet.delete(point)
 })
 
-pocketArr = [...pocketSet]
-const pocketArea = pocketArr.reduce((acc, point) => {
+const pocketArea = [...pocketSet].reduce((acc, point) => {
   const [x, y, z] = keyToPoint(point)
   const neighbors = getNeighbors(x, y, z)
-
-  let area = 0
-  neighbors.forEach(([i, j, k]) => {
-    const newPoint = pointToKey(i, j, k)
-    if (grid.has(newPoint)) {
-      area++
-    }
-  })
+  const area = neighbors.reduce(
+    (acc, [i, j, k]) => acc + (grid.has(pointToKey(i, j, k)) ? 1 : 0),
+    0
+  )
 
   return acc + area
 }, 0)
